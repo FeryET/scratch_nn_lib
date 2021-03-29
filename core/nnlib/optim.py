@@ -11,11 +11,11 @@ class SGDOptimizer():
     if self.decay_strategy is not None:
       self.lr = self.decay_strategy(self.lr)
   
-  def step(self, params, **kwargs):
+  def step(self, params, batch_size, **kwargs):
     self.reg_loss_function = kwargs.get("reg_loss_function", None)
     for p in params.values():
       if self.reg_loss_function is not None:
-          p["weights"] += - p["grads"]["weights"] * self.lr + reg_loss_function.gradient(p["weights"])
+          p["weights"] += - p["grads"]["weights"] * self.lr + reg_loss_function.gradient(p["weights"]) / batch_size
       else:
           p["weights"] += - p["grads"]["weights"] * self.lr
       p["bias"] += -p["grads"]["bias"] * self.lr
