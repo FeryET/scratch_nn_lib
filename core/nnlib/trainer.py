@@ -12,8 +12,6 @@ class Trainer():
         self.reg_loss_function = reg_loss_function
         self.total_epochs = epochs
         self.batchsize = batchsize
-        self.lr = lr
-        self.lr_decay = lr_decay
         self.shuffle = True
         self.validation_split = validation_split
 

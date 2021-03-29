@@ -10,7 +10,6 @@ class Layer(ABC):
         self._name = kwargs.get("name", None)
         self._weight_initializer = kwargs.get("weight_initializer", None)
         self._params = {"weights": None, "bias": None, "outputs": None, "grads": None}
-        self._initialize_params()
         pass
 
     @abstractmethod
@@ -44,6 +43,10 @@ class Layer(ABC):
     def name(self, n):
         self._name = n
 
+    @abstractmethod
+    def compile(self, info=None):
+        self._initialize_params()
+
 
 class InputLayer(Layer):
     def __init__(self, input_dim, *args, **kwargs):
@@ -55,6 +58,9 @@ class InputLayer(Layer):
         super().__init__(*args, **kwargs)
 
     def forward(self, X, train=True):
+        if X.shape[1] != self.input_dim:
+            raise RuntimeError(
+                "Difference between layer dimension and input array dimension.")
         out = X
         return out
 
@@ -65,10 +71,13 @@ class InputLayer(Layer):
     def reset_grad(self):
         pass
 
+    def compile(self, info=None):
+        return {"input_dim": self.input_dim}
+
 
 class DenseLayer(Layer):
-    def __init__(self, input_dim, output_dim, activation, *args, **kwargs):
-        self.input_dim = input_dim
+    def __init__(self, output_dim, activation, *args, **kwargs):
+        self.input_dim = None
         self.output_dim = output_dim
         self.activation = activation
         super().__init__(*args, **kwargs)
@@ -99,3 +108,8 @@ class DenseLayer(Layer):
         self.params["grads"]["weights"] = layer_input @ delta
         self.params["grads"]["bias"] = delta
         return delta, self.params["weights"]
+
+    def compile(self, info):
+        self.input_dim = info["input_dim"]
+        super().compile()
+        return {"input_dim": self.output_dim}

@@ -8,9 +8,10 @@ from sklearn.pipeline import Pipeline
 from tqdm.auto import trange
 from sklearn.base import TransformerMixin
 import logging
+from abc import ABC, abstractmethod, abstractproperty
 
 
-class UTKDatasetLoader:
+class DatasetLoader(ABC):
     class Reshaper(TransformerMixin):
         def transform(self, X):
             return X.reshape(X.shape[0], -1)
@@ -18,6 +19,46 @@ class UTKDatasetLoader:
         def fit_transform(self, X, y=None, **fit_params):
             return self.transform(X)
 
+    @abstractmethod
+    def __iter__(self):
+        pass
+
+    @abstractmethod
+    def __next__(self):
+        pass
+
+    @abstractmethod
+    def __len__(self):
+        pass
+
+    @abstractmethod
+    def _getindex(self, index):
+        pass
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            start, stop, step = key.indices(len(self))
+            return [self[i] for i in range(start, stop, step)]
+        elif isinstance(key, int):
+            return self._getindex(key)
+        else:
+            raise TypeError('Invalid argument type: {}'.format(type(key)))
+
+    @abstractmethod
+    def batches(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def validation_set(self, batch_size):
+        pass
+
+    @property
+    @abstractmethod
+    def split_index(self):
+        pass
+
+
+class UTKDatasetLoader(DatasetLoader):
     class Decorators:
         @classmethod
         def target_columns(cls, ufunc):
@@ -60,7 +101,7 @@ class UTKDatasetLoader:
         self.dim_reducer_size = dim_reducer_size
         self.dim_reducer = Pipeline(
             [
-                ("reshaper", UTKDatasetLoader.Reshaper()),
+                ("reshaper", DatasetLoader.Reshaper()),
                 ("scaler", StandardScaler()),
                 ("pca", PCA(n_components=dim_reducer_size)),
             ]
@@ -107,15 +148,6 @@ class UTKDatasetLoader:
         img = np.array(Image.open(fpath))
         return img, int(age), int(gender), int(race)
 
-    def __getitem__(self, key):
-        if isinstance(key, slice):
-            start, stop, step = key.indices(len(self))
-            return [self[i] for i in range(start, stop, step)]
-        elif isinstance(key, int):
-            return self._getindex(key)
-        else:
-            raise TypeError('Invalid argument type: {}'.format(type(key)))
-
     @property
     def split_index(self):
         return int(len(self) * (1 - self.validation_split))
@@ -155,7 +187,7 @@ class UTKDatasetLoader:
         print(X_val.shape, y_val.shape)
         logging.info(
             f"validation set loading started.(batch_size={batch_size})")
-        #lazily reducing dimensions of validation set
+        # lazily reducing dimensions of validation set
         for start_idx in range(self.split_index, len(self), batch_size):
             curr_idx = start_idx - self.split_index
             total = len(self) - self.split_index
