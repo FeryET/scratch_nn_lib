@@ -19,6 +19,6 @@ class MSELoss(Loss):
 
 class L2RegularizationLoss(Loss):
   def __call__(self,  params):
-    return np.square([params["weights"] for key in params.values()]) / 2
+    return np.square([params["weights"] for key in params.values()]).sum() / 2
   def gradient(self, w):
-    return w
+    return w.sum()

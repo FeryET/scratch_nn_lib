@@ -77,7 +77,7 @@ class DenseLayer(Layer):
         if self._weight_initializer is None:
             self._weight_initializer = NormalWeightInitializer()
         weights = self._weight_initializer(shape=(self.input_dim, self.output_dim))
-        bias = self._weight_initializer(shape=(self.output_dim, 1))
+        bias = self._weight_initializer(shape=(1, self.output_dim))
         self.params["weights"] = weights
         self.params["bias"] = bias
 
@@ -86,16 +86,16 @@ class DenseLayer(Layer):
           It's important to notice that forward is expecting your matrice 
           to be in form (n_features, n_samples)
         """
-        out = self.activation(self.params["weights"].T @
-                              X + np.tile(self.params["bias"], (1, X.shape[1])))
+        out = self.activation(X @ self.params["weights"]
+                              + np.tile(self.params["bias"], (X.shape[0], 1)))
         return out
 
     def backward(self, layer_input, delta_next_layer, w_next_layer):
         if w_next_layer is None:
             delta = delta_next_layer * self.activation.derivative(self.params["outputs"])
         else:
-            delta = ((w_next_layer).T @
-                     delta_next_layer) * self.activation.derivative(self.params["outputs"])
-        self.params["grads"]["weights"] = delta @ layer_input
+            delta = (delta_next_layer @
+                     w_next_layer) * self.activation.derivative(self.params["outputs"])
+        self.params["grads"]["weights"] = layer_input @ delta
         self.params["grads"]["bias"] = delta
         return delta, self.params["weights"]
