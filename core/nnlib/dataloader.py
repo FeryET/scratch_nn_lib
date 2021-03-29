@@ -53,7 +53,7 @@ class UTKDatasetLoader:
         self.shuffle = True
         if self.shuffle:
             np.random.shuffle(self.files)
-            
+
         self.validation_split = validation_split
         self.batch_size = batch_size
         self._target_columns = target_columns
@@ -155,16 +155,15 @@ class UTKDatasetLoader:
         print(X_val.shape, y_val.shape)
         logging.info(
             f"validation set loading started.(batch_size={batch_size})")
+        #lazily reducing dimensions of validation set
         for start_idx in range(self.split_index, len(self), batch_size):
             curr_idx = start_idx - self.split_index
             total = len(self) - self.split_index
-
             X_cache, ages, genders, races = list(
                 zip(*self[start_idx:start_idx+batch_size]))
             X_cache = np.array(X_cache)
             X_cache = self.dim_reducer.transform(X_cache)
             y_cache = np.array((ages, genders, races)).T
-            
             y_val[curr_idx:curr_idx+batch_size, :] = y_cache
             X_val[curr_idx:curr_idx+batch_size, :] = X_cache
             logging.info(
