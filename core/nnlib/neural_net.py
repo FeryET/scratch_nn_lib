@@ -1,6 +1,7 @@
 import numpy as np
 from abc import ABC, abstractmethod
 from core.nnlib import InputLayer
+from tabulate import tabulate
 # Defining base neural network
 
 
@@ -11,7 +12,7 @@ class NeuralNet():
     def add(self, l):
         if l.name == None:
             count = sum([1 for layer in self.layers if type(layer) == type(l)])
-            l.name = f"{str(type(l))}_{count}"
+            l.name = f"{str(type(l).__name__)}_{count}"
         self.layers.append(l)
 
     def forward(self, X, train=True):
@@ -49,6 +50,7 @@ class NeuralNet():
         info = {}
         for l in self.layers:
             info = l.compile(info)
+        
 
     @property
     def params(self):
@@ -56,3 +58,10 @@ class NeuralNet():
         for l in self.layers:
             _params[l.name] = l.params
         return _params
+
+
+    def __str__(self) -> str:
+        dicts_ = [l.to_json() for l in self.layers]
+        rows = [d.values() for d in dicts_]
+        header = dicts_[0].keys()
+        return tabulate(rows, headers=header)

@@ -47,7 +47,9 @@ class Layer(ABC):
     def compile(self, info=None):
         self._initialize_params()
 
-
+    @abstractmethod
+    def to_json(self) -> dict:
+        pass
 class InputLayer(Layer):
     def __init__(self, input_dim, *args, **kwargs):
         '''
@@ -74,11 +76,19 @@ class InputLayer(Layer):
     def compile(self, info=None):
         return {"input_dim": self.input_dim}
 
+    def _initialize_params(self):
+        pass
 
+    def to_json(self) -> dict:
+        return {
+            "name": self.name,
+            "dim": f"(n_samples,{self.input_dim})"
+        }
+    
 class DenseLayer(Layer):
-    def __init__(self, output_dim, activation, *args, **kwargs):
+    def __init__(self, dim, activation, *args, **kwargs):
         self.input_dim = None
-        self.output_dim = output_dim
+        self.output_dim = dim
         self.activation = activation
         super().__init__(*args, **kwargs)
 
@@ -113,3 +123,9 @@ class DenseLayer(Layer):
         self.input_dim = info["input_dim"]
         super().compile()
         return {"input_dim": self.output_dim}
+
+    def to_json(self) -> dict:
+        return {
+            "name": self.name,
+            "dim": f"({self.input_dim},{self.output_dim})"
+        }
