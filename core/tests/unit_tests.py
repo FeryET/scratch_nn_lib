@@ -58,19 +58,21 @@ class TestLoss:
     def test_mse_loss(self):
         y1 = np.array([[0, 1, 2, 3, 4]] * 4)
         y2 = np.array([[-1, 0.99, 2.05, 3.05, 10]] * 4)
-        mse = np.square(y1 - y2).mean(axis=0)
-        
+        mse = np.square(y1 - y2).mean(axis=0) / 2
+        loss = MSELoss()(y1, y2)
+        ntest.assert_almost_equal(mse, loss)
 
 class TestLayers:
     def test_abstract_layer(self):
         ntest.assert_raises(TypeError, Layer)
 
     def test_dense_layer(self):
-        shape = (10, 100)  # 10 features, 1000 elements
+        shape = (100, 10)  # 10 features, 1000 elements
         l = DenseLayer(input_dim=shape[0], output_dim=shape[1], activation=LeakyRelu())
-        X = np.random.normal(0, 2, (shape[0], 1000))
+        X = np.random.normal(0, 2, (1000, shape[0]))
         # transposing because the feature vector is deemed to be feature first
-        ntest.assert_equal(shape[1], l(X).T.shape[1])
+        ntest.assert_equal(X.shape[0], l(X).shape[0])
+        ntest.assert_equal(shape[1], l(X).shape[1])
 
     
 
