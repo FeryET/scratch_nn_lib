@@ -1,9 +1,4 @@
-
-# Created by https://www.toptal.com/developers/gitignore/api/python,vscode,linux,images,compressed
-# Edit at https://www.toptal.com/developers/gitignore?templates=python,vscode,linux,images,compressed
-
-
-
+tests/
 # Created by https://www.toptal.com/developers/gitignore/api/microsoftoffice
 # Edit at https://www.toptal.com/developers/gitignore?templates=microsoftoffice
 
