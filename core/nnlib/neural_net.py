@@ -1,6 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
-from core.nnlib import InputLayer
+from core.nnlib import InputLayer, weight
 from tabulate import tabulate
 # Defining base neural network
 
@@ -23,15 +23,13 @@ class NeuralNet():
                 l.params["outputs"] = out
         return out
 
-    def backward(self, out_delta):
-        next_layer_delta = out_delta
-        next_layer_w = None
-        for idx in range(len(self.layers), 1, -1):  # We won't reach the input layer
+    def backward(self, error):
+        for idx in range(len(self.layers)-1, 0, -1):  # We won't reach the input layer
             cur_layer = self.layers[idx]
             prev_layer = self.layers[idx - 1]
-            next_layer_delta, next_layer_w = cur_layer.backward(
+            error = cur_layer.backward(
                 prev_layer.params["outputs"],
-                next_layer_delta, next_layer_w
+                error
             )
 
     def reset_grad(self):
@@ -59,6 +57,12 @@ class NeuralNet():
             _params[l.name] = l.params
         return _params
 
+    @property 
+    def weights(self):
+        weights = []
+        for l in self.layers[1:]:
+            weights.append(l.params["weights"])
+        return weights
 
     def __str__(self) -> str:
         dicts_ = [l.to_json() for l in self.layers]

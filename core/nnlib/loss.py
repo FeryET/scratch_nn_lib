@@ -18,7 +18,7 @@ class MSELoss(Loss):
     return (y_pred - y_true).mean(axis=0)
 
 class L2RegularizationLoss(Loss):
-  def __call__(self,  params):
-    return np.square([params["weights"] for key in params.values()]).sum() / 2
+  def __call__(self,  weights):
+    return sum([np.square(w).sum() for w in weights]) / 2
   def gradient(self, w):
     return w.sum()

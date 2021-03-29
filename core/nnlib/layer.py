@@ -1,3 +1,4 @@
+from pprint import pprint
 import numpy as np
 from abc import ABC, abstractmethod
 from core.nnlib.weight import NormalWeightInitializer
@@ -9,7 +10,7 @@ class Layer(ABC):
     def __init__(self, *args, **kwargs):
         self._name = kwargs.get("name", None)
         self._weight_initializer = kwargs.get("weight_initializer", None)
-        self._params = {"weights": None, "bias": None, "outputs": None, "grads": None}
+        self._params = {"weights": None, "bias": None, "outputs": None, "grads": {}}
         pass
 
     @abstractmethod
@@ -28,7 +29,7 @@ class Layer(ABC):
         return self.forward(*args, **kwargs)
 
     def reset_grad(self):
-        self._params["grads"] = None
+        self._params["grads"] = {}
         self._params["outputs"] = None
 
     @property
@@ -50,6 +51,8 @@ class Layer(ABC):
     @abstractmethod
     def to_json(self) -> dict:
         pass
+
+
 class InputLayer(Layer):
     def __init__(self, input_dim, *args, **kwargs):
         '''
@@ -84,7 +87,8 @@ class InputLayer(Layer):
             "name": self.name,
             "dim": f"(n_samples,{self.input_dim})"
         }
-    
+
+
 class DenseLayer(Layer):
     def __init__(self, dim, activation, *args, **kwargs):
         self.input_dim = None
@@ -109,15 +113,11 @@ class DenseLayer(Layer):
                               + np.tile(self.params["bias"], (X.shape[0], 1)))
         return out
 
-    def backward(self, layer_input, delta_next_layer, w_next_layer):
-        if w_next_layer is None:
-            delta = delta_next_layer * self.activation.derivative(self.params["outputs"])
-        else:
-            delta = (delta_next_layer @
-                     w_next_layer) * self.activation.derivative(self.params["outputs"])
-        self.params["grads"]["weights"] = layer_input @ delta
-        self.params["grads"]["bias"] = delta
-        return delta, self.params["weights"]
+    def backward(self, layer_input, error):
+        delta = error * self.activation.derivative(self.params["outputs"])
+        self.params["grads"]["weights"] = layer_input.T @ delta
+        self.params["grads"]["bias"] = delta.sum(axis=0).reshape(1, -1)
+        return delta @ self.params["weights"].T
 
     def compile(self, info):
         self.input_dim = info["input_dim"]

@@ -9,7 +9,7 @@ from tqdm.auto import trange
 from sklearn.base import TransformerMixin
 import logging
 from abc import ABC, abstractmethod, abstractproperty
-
+import time
 
 class DatasetLoader(ABC):
     class Reshaper(TransformerMixin):
@@ -57,6 +57,14 @@ class DatasetLoader(ABC):
     def split_index(self):
         pass
 
+    def update_progress(self, **kwargs):
+        try:
+            self.prange.set_postfix(kwargs)
+            # self.prange.update(postfix=string)
+            self.prange.refresh()
+            time.sleep(0.01)
+        except:
+            pass
 
 class UTKDatasetLoader(DatasetLoader):
     class Decorators:
@@ -74,7 +82,7 @@ class UTKDatasetLoader(DatasetLoader):
         def floater(cls, ufunc):
             def wrapper(self, *args, **kwargs):
                 X, y = ufunc(self, *args, **kwargs)
-                return X.astype(np.float32), y
+                return X.astype(np.float64), y
             return wrapper
 
     def __init__(
@@ -159,13 +167,13 @@ class UTKDatasetLoader(DatasetLoader):
         train_indices = np.arange(self.split_index)
         if self.shuffle:
             np.random.shuffle(train_indices)
-        prange = (
+        self.prange = (
             trange(0, self.split_index, self.batch_size)
             if progress
             else range(0, self.split_index, self.batch_size)
         )
 
-        for start_idx in prange:
+        for start_idx in self.prange:
             batch_indices = train_indices[
                 start_idx: start_idx + self.batch_size
             ]
@@ -179,6 +187,7 @@ class UTKDatasetLoader(DatasetLoader):
             y_batch = np.array(y_batch)
             yield X_batch, y_batch
 
+    
     @Decorators.floater
     @Decorators.target_columns
     def validation_set(self, batch_size=30):
