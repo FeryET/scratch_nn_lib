@@ -47,6 +47,10 @@ class Layer(ABC):
 
 class InputLayer(Layer):
     def __init__(self, input_dim, *args, **kwargs):
+        '''
+            Be sure that your input should be as shaped as (features, number of samples)
+            and your output should be as (output neurons, number of samples)
+        '''
         self.input_dim = input_dim
         super().__init__(*args, **kwargs)
 

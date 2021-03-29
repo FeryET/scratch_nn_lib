@@ -51,10 +51,11 @@ class UTKDatasetLoader:
             for f in files if len(f.split("_")) == 4
         ]
         self.shuffle = True
-        self.validation_split = validation_split
-        self.batch_size = batch_size
         if self.shuffle:
             np.random.shuffle(self.files)
+            
+        self.validation_split = validation_split
+        self.batch_size = batch_size
         self._target_columns = target_columns
         self.dim_reducer_size = dim_reducer_size
         self.dim_reducer = Pipeline(

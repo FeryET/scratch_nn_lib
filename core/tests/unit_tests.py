@@ -42,6 +42,25 @@ class TestWeights:
         ntest.assert_equal(weights.shape, shape)
 
 
+class TestDecay:
+    def test_abstract_decay(self):
+        ntest.assert_raises(TypeError, LearningRateDecay)
+    
+    def test_constant_decay(self):
+        decay = ConstantDecay()
+        lr = 0.01
+        ntest.assert_almost_equal(lr * decay.decay, decay(lr))
+
+class TestLoss:
+    def test_abstract_loss(self):
+        ntest.assert_raises(TypeError, Loss)
+    
+    def test_mse_loss(self):
+        y1 = np.array([[0, 1, 2, 3, 4]] * 4)
+        y2 = np.array([[-1, 0.99, 2.05, 3.05, 10]] * 4)
+        mse = np.square(y1 - y2).mean(axis=0)
+        
+
 class TestLayers:
     def test_abstract_layer(self):
         ntest.assert_raises(TypeError, Layer)
@@ -53,6 +72,7 @@ class TestLayers:
         # transposing because the feature vector is deemed to be feature first
         ntest.assert_equal(shape[1], l(X).T.shape[1])
 
+    
 
 if __name__ == "__main__":
     pass
