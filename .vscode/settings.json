@@ -1,0 +1,9 @@
+{
+    "python.pythonPath": "/media/farhood/Data/Courses/Bio Master Courses/Spring 1400/Deep Learning/Assignments/Assignment #1/venv/bin/python3.9",
+    "python.formatting.provider": "autopep8",
+    "python.formatting.autopep8Args": ["--max-line-length", "90", "--experimental"],
+    "python.workspaceSymbols.exclusionPatterns": [
+        "**/site-packages/**",
+        "./data/"
+    ]
+}
