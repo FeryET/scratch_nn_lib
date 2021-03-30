@@ -110,7 +110,7 @@ class DenseLayer(Layer):
           to be in form (n_features, n_samples)
         """
         out = self.activation(X @ self.params["weights"]
-                              + np.tile(self.params["bias"], (X.shape[0], 1)))
+                              + self.params["bias"])
         return out
 
     def backward(self, layer_input, error):

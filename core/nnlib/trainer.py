@@ -24,8 +24,8 @@ class Trainer():
             # Train Set
             for X_batch, y_batch in dataloader.batches():
                 y_pred = model.forward(X_batch, train=True)
-                loss = self.opt.compute_loss(y_pred=y_pred, y_true=y_batch, weights=model.weights)
-                output_grad = self.opt.compute_loss_grad(y_pred=y_pred, y_true=y_batch)
+                loss = self.opt.compute_loss(pred=y_pred, target=y_batch, weights=model.weights)
+                output_grad = self.opt.compute_loss_grad(pred=y_pred, target=y_batch)
                 model.backward(output_grad)
                 self.opt.step(batch_size=len(X_batch))
                 info["training_loss"].append(loss)
@@ -37,7 +37,7 @@ class Trainer():
             # Validation Set
             logging.info(f"validation set computations in epoch #{epoch + 1}.")
             y_pred = model.forward(X_val, train=True)
-            val_loss = self.opt.compute_loss(y_pred, y_val, weights=model.weights)
+            val_loss = self.opt.compute_loss(pred=y_pred, target=y_val, weights=model.weights)
             info["validation_loss"] = float(val_loss)
             dataloader.update_progress(training_loss=info["training_loss"],validation_loss=info["validation_loss"])
             training_info.append(info)

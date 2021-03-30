@@ -18,3 +18,11 @@ class NormalWeightInitializer(WeightInitializer):
 
   def __call__(self, shape):
     return np.random.normal(loc=self.mean, scale=self.std, size=shape)
+
+
+class ZeroWeightInitializer(WeightInitializer):
+  def __init__(self, *args, **kwargs):
+      super().__init__(*args, **kwargs)
+
+  def __call__(self, shape):
+      return np.zeros(shape, dtype=np.float32)
