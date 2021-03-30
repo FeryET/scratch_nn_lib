@@ -1,3 +1,5 @@
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import load_diabetes
 import logging
 
 import numpy as np
@@ -6,10 +8,9 @@ from tqdm import tqdm, trange
 from pprint import pprint
 logging.basicConfig(format='%(asctime)s %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
-from sklearn.datasets import load_diabetes
-from sklearn.preprocessing import StandardScaler
 
 path = "data/UTKFace"
+
 
 class TestDataSetLoader(DatasetLoader):
     def __init__(self,
@@ -21,9 +22,12 @@ class TestDataSetLoader(DatasetLoader):
         self.validation_split = validation_split
         diabetes = load_diabetes()
         X, y = diabetes.data, diabetes.target
+        X, y = X.astype(np.float128), y.astype(np.float128)
         X = StandardScaler().fit_transform(X)
-        self.X = X.astype(np.float64)
-        self.y = y[...,np.newaxis]
+        y = y[..., np.newaxis]
+        y = StandardScaler().fit_transform(y)
+        self.X = X
+        self.y = y
 
     def batches(self, *args, **kwargs):
         self.prange = trange(0, self.split_index, self.batch_size)
@@ -58,17 +62,23 @@ dataset = TestDataSetLoader()
 model = NeuralNet()
 
 model.add(InputLayer(dataset.X.shape[1]))
-model.add(DenseLayer(dim=50, activation=LeakyRelu()))
+model.add(
+    DenseLayer(
+        dim=50, activation=LeakyRelu(),
+        weight_initializer=NormalWeightInitializer(std=0.02)))
 model.add(DenseLayer(dim=50, activation=LeakyRelu()))
 model.add(DenseLayer(dim=1, activation=LeakyRelu()))
 model.compile()
 print(str(model))
 
-opt = SGDOptimizer(lr=0.0001, decay_strategy=ConstantDecay(0.98), lambda_reg=0.002)
-loss_function = MSELoss()
+loss = MSELoss()
 reg_loss = L2RegularizationLoss()
+opt = SGDOptimizer(loss=loss, lr=10e-3, decay_strategy=ConstantDecay(
+    0.98), lambda_reg=10e-5, regularizaton_loss=reg_loss)
 
-trainer = Trainer(opt, loss_function)
+opt.parameters(model.params)
+
+trainer = Trainer(opt)
 
 print(dataset.y.shape)
 

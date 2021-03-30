@@ -21,4 +21,4 @@ class L2RegularizationLoss(Loss):
   def __call__(self,  weights):
     return sum([np.square(w).sum() for w in weights]) / 2
   def gradient(self, w):
-    return w.sum()
+    return w
