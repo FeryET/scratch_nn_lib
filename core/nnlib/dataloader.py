@@ -2,7 +2,7 @@ import os
 from PIL import Image
 import numpy as np
 from pathlib import Path
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
 from tqdm.auto import trange
@@ -10,6 +10,7 @@ from sklearn.base import TransformerMixin
 import logging
 from abc import ABC, abstractmethod, abstractproperty
 import time
+
 
 class DatasetLoader(ABC):
     class Reshaper(TransformerMixin):
@@ -66,16 +67,18 @@ class DatasetLoader(ABC):
         except:
             pass
 
+
 class UTKDatasetLoader(DatasetLoader):
     class Decorators:
         @classmethod
-        def target_columns(cls, ufunc):
+        def target_column(cls, ufunc):
             def wrapper(self, *args, **kwargs):
                 X, y = ufunc(self, *args, **kwargs)
-                if self.target_columns is None:
+                if self.target_column is None:
                     return X, y
                 else:
-                    return X, y[:, self.target_columns]
+                    return X, self.encoders[self.target_column].transform(
+                        y[:, self.target_column])
             return wrapper
 
         @classmethod
@@ -92,7 +95,7 @@ class UTKDatasetLoader(DatasetLoader):
         shuffle=True,
         validation_split=0.1,
         dim_reducer_size=128,
-        target_columns=None,
+        target_column=None,
     ):
         self.files = [
             os.path.join(root, f)
@@ -105,7 +108,7 @@ class UTKDatasetLoader(DatasetLoader):
 
         self.validation_split = validation_split
         self.batch_size = batch_size
-        self._target_columns = target_columns
+        self._target_column = target_column
         self.dim_reducer_size = dim_reducer_size
         self.dim_reducer = Pipeline(
             [
@@ -114,14 +117,21 @@ class UTKDatasetLoader(DatasetLoader):
                 ("pca", PCA(n_components=dim_reducer_size)),
             ]
         )
+        self._initalize_label_encoders()
+
+    def _initalize_label_encoders(self):
+        ages, genders, races = list(zip(*[f.split("_")[:-1] for f in self.files]))
+        self.encoders = [None, OneHotEncoder(), OneHotEncoder()]
+        self.encoders[1].fit_transform(genders)
+        self.encoders[2].fit_transform(races)
 
     @property
-    def target_columns(self):
-        return self._target_columns
+    def target_column(self):
+        return self._target_column
 
-    @target_columns.setter
-    def target_columns(self, *args):
-        self._target_columns = args
+    @target_column.setter
+    def target_column(self, c):
+        self._target_column = c
 
     def fit_dim_reducer(self, n_samples, shuffle=True):
         logging.info(f"fitting dimension reducer(shuffle={shuffle}).")
@@ -161,7 +171,7 @@ class UTKDatasetLoader(DatasetLoader):
         return int(len(self) * (1 - self.validation_split))
 
     @Decorators.floater
-    @Decorators.target_columns
+    @Decorators.target_column
     def batches(self, progress=True):
         logging.info("loading training batches.")
         train_indices = np.arange(self.split_index)
@@ -187,9 +197,8 @@ class UTKDatasetLoader(DatasetLoader):
             y_batch = np.array(y_batch)
             yield X_batch, y_batch
 
-    
     @Decorators.floater
-    @Decorators.target_columns
+    @Decorators.target_column
     def validation_set(self, batch_size=30):
         X_val = np.zeros((len(self)-self.split_index, self.dim_reducer_size))
         y_val = np.zeros((len(self)-self.split_index, 3))
