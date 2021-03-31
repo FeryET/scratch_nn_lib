@@ -131,7 +131,7 @@ class DenseLayer(Layer):
     def backward(self, layer_input, error):
         delta = error * self.activation.derivative(self.params["outputs"])
         self.params["grads"]["weights"] = layer_input.T @ delta
-        self.params["grads"]["bias"] = delta.sum(axis=0).reshape(1, -1)
+        self.params["grads"]["bias"] = delta.sum(axis=0, keepdims=True)
         return delta @ self.params["weights"].T
 
     def compile(self, info):

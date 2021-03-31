@@ -6,6 +6,7 @@ from tqdm import tqdm, trange
 from pprint import pprint
 logging.basicConfig(format='%(asctime)s %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.DEBUG)
+from sklearn.metrics import mean_absolute_error
 
 path = "data/UTKFace"
 
@@ -33,8 +34,10 @@ opt.parameters(model.params)
 
 trainer = Trainer(opt, epochs=1)
 
-train_info, test_info = trainer.train(model, dataset)
+train_info, test_info = trainer.train(model, dataset, mae = mean_absolute_error)
 
+pprint(train_info)
+pprint(test_info)
 # X_test, y_test = dataset.test_set()
 # print(X_test.shape, y_test.shape)
     # pass

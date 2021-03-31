@@ -2,7 +2,7 @@ import os
 from PIL import Image
 import numpy as np
 from pathlib import Path
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler
 from sklearn.decomposition import PCA
 from sklearn.pipeline import Pipeline
 from tqdm.auto import trange
@@ -96,11 +96,8 @@ class UTKDatasetLoader(DatasetLoader):
                     if self.target_column is None:
                         pass  # Do Nothing
                     else:
-                        if self.target_column == 0:
-                            y = y[:, self.target_column][..., np.newaxis]
-                        else:
-                            y = self.encoders[self.target_column].transform(
-                                y[:, self.target_column])
+                        y = y[:, self.target_column][..., np.newaxis]
+                        y = self.encoders[self.target_column].transform(y)
                     yield X, y
             return wrapper
 
@@ -149,7 +146,8 @@ class UTKDatasetLoader(DatasetLoader):
         ages, genders, races = map(
             lambda x: np.array(x)[..., np.newaxis],
             (ages, genders, races))
-        self.encoders = [None, OneHotEncoder(), OneHotEncoder()]
+        self.encoders = [MinMaxScaler(), OneHotEncoder(), OneHotEncoder()]
+        self.encoders[0].fit_transform(ages)
         self.encoders[1].fit_transform(genders)
         self.encoders[2].fit_transform(races)
 
