@@ -31,7 +31,7 @@ class SGDOptimizer():
 
     def parameters(self, params):
         self.params = params
-        self.prev_grads = {k: {"weights": 0, "bias": 0}
+        self.momentum_grads = {k: {"weights": 0, "bias": 0}
                            for k in list(self.params.keys())[1:]}
 
     def compute_loss(self, target, pred, **kwargs):
@@ -58,13 +58,11 @@ class SGDOptimizer():
             bias_grad = p["grads"]["bias"] * self.lr
 
             # applying momentum
-            weights_grad += self.momentum * self.prev_grads[name]["weights"]
-            bias_grad += self.momentum * self.prev_grads[name]["bias"]
+            self.momentum_grads[name]["weights"] = self.momentum * self.momentum_grads[name]["weights"] + weights_grad
+            self.momentum_grads[name]["bias"] = self.momentum * self.momentum_grads[name]["bias"] + bias_grad 
 
             # applying gradients
-            self.params[name]["weights"] -= weights_grad
-            self.params[name]["bias"] -= bias_grad
+            self.params[name]["weights"] -= self.momentum_grads[name]["weights"]
+            self.params[name]["bias"] -= self.momentum_grads[name]["bias"]
 
-            # saving gradients for next iterations momentum
-            self.prev_grads[name]["weights"] = weights_grad
-            self.prev_grads[name]["bias"] = bias_grad
+            

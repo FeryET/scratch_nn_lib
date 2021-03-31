@@ -36,7 +36,6 @@ class Trainer():
                     info[f"train_{k}"].append(value)
                 dataloader.update_progress(loss=loss)
 
-            # info["training_loss"] = float(np.mean(info["training_loss"]))
             for k in info.keys():
                 if k.startswith("train"):
                     info[k] = float(np.mean(info[k]))
@@ -48,7 +47,7 @@ class Trainer():
             val_loss = self.opt.compute_loss(pred=y_pred, target=y_val, weights=model.weights)
             info["val_loss"] = float(val_loss)
             for k, metr in metrics.items():
-                info[f"val_k"] = metr(y_pred=y_pred, y_true=y_val)
+                info[f"val_k"] = float(metr(y_pred=y_pred, y_true=y_val))
             dataloader.update_progress(end=True, **info)
             training_info.append(info)
         X_test, y_test = dataloader.test_set()
@@ -56,5 +55,5 @@ class Trainer():
         test_info = {}
         test_info["test_loss"] = self.opt.compute_loss(pred=y_pred, target=y_test, weights=model.weights)
         for k, metr in metrics.items():
-            test_info[f"test_{k}"] = metr(y_pred=y_pred, y_true=y_test)
+            test_info[f"test_{k}"] = float(metr(y_pred=y_pred, y_true=y_test))
         return training_info, test_info
