@@ -20,8 +20,8 @@ class Activation(ABC):
 
 
 class LeakyRelu(Activation):
-    def __init__(self, leakage_ratio=0.1, *args, **kwargs):
-        self.leakage_ratio = 0.1
+    def __init__(self, leakage_ratio=0.01, *args, **kwargs):
+        self.leakage_ratio = leakage_ratio
         super(Activation, self).__init__(*args, **kwargs)
 
     def __call__(self, X):

@@ -72,7 +72,7 @@ class DatasetLoader(ABC):
             if end:
                 self.prange.close()
                 epoch = kwargs.pop("epoch")
-                print(f"Epoch #{epoch+1} ended with " + "\t".join([f"{k}: {float(v):.3f}" for k, v in kwargs.items()]))
+                print(f"Epoch #{epoch} ended with " + "\t".join([f"{k}: {float(v):.3f}" for k, v in kwargs.items()]))
             else:
                 if "epoch" in kwargs.keys():
                     self.prange.set_description(f"Epoch #{kwargs['epoch'] + 1}")
