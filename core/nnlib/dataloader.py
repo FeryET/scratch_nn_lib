@@ -77,8 +77,11 @@ class UTKDatasetLoader(DatasetLoader):
                 if self.target_column is None:
                     return X, y
                 else:
-                    return X, self.encoders[self.target_column].transform(
-                        y[:, self.target_column])
+                    if self.target_column == 0:
+                        return X, y[:, self.target_column]
+                    else:
+                        return X, self.encoders[self.target_column].transform(
+                            y[:, self.target_column])
             return wrapper
 
         @classmethod
@@ -120,7 +123,8 @@ class UTKDatasetLoader(DatasetLoader):
         self._initalize_label_encoders()
 
     def _initalize_label_encoders(self):
-        ages, genders, races = list(zip(*[f.split("_")[:-1] for f in self.files]))
+        ages, genders, races = list(zip(*[map(int, Path(f).stem.split("_")[:-1]) for f in self.files]))
+        ages, genders, races = map(lambda x: np.array(x)[...,np.newaxis], (ages, genders, races))
         self.encoders = [None, OneHotEncoder(), OneHotEncoder()]
         self.encoders[1].fit_transform(genders)
         self.encoders[2].fit_transform(races)
@@ -202,7 +206,6 @@ class UTKDatasetLoader(DatasetLoader):
     def validation_set(self, batch_size=30):
         X_val = np.zeros((len(self)-self.split_index, self.dim_reducer_size))
         y_val = np.zeros((len(self)-self.split_index, 3))
-        print(X_val.shape, y_val.shape)
         logging.info(
             f"validation set loading started.(batch_size={batch_size})")
         # lazily reducing dimensions of validation set
