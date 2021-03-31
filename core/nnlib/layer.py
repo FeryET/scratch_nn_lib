@@ -2,26 +2,38 @@ from pprint import pprint
 import numpy as np
 from abc import ABC, abstractmethod
 from core.nnlib.weight import NormalWeightInitializer
+import logging
 
 # Defining base abstract layer class
 
 
 class Layer(ABC):
+    class ExceptionLogger:
+        @classmethod
+        def exception_log(cls, ufunc):
+            def wrapper(self, *args, **kwargs):
+                try:
+                    return ufunc(self, *args, **kwargs)
+                except Exception as e:
+                    logging.debug(f"error occured at: {self.name}\t")
+                    raise e
+            return wrapper
+
     def __init__(self, *args, **kwargs):
         self._name = kwargs.get("name", None)
         self._weight_initializer = kwargs.get("weight_initializer", None)
         self._params = {"weights": None, "bias": None, "outputs": None, "grads": {}}
         pass
 
-    @abstractmethod
+    @ abstractmethod
     def _initialize_params(self):
         pass
 
-    @abstractmethod
+    @ abstractmethod
     def forward(self, X, train=True):
         pass
 
-    @abstractmethod
+    @ abstractmethod
     def backward(self, layer_input, delta_next_layer, w_next_layer):
         pass
 
@@ -32,23 +44,23 @@ class Layer(ABC):
         self._params["grads"] = {}
         self._params["outputs"] = None
 
-    @property
+    @ property
     def params(self):
         return self._params
 
-    @property
+    @ property
     def name(self):
         return self._name
 
-    @name.setter
+    @ name.setter
     def name(self, n):
         self._name = n
 
-    @abstractmethod
+    @ abstractmethod
     def compile(self, info=None):
         self._initialize_params()
 
-    @abstractmethod
+    @ abstractmethod
     def to_json(self) -> dict:
         pass
 
@@ -104,15 +116,18 @@ class DenseLayer(Layer):
         self.params["weights"] = weights
         self.params["bias"] = bias
 
+    @Layer.ExceptionLogger.exception_log
     def forward(self, X, train=True):
         """
-          It's important to notice that forward is expecting your matrice 
+          It's important to notice that forward is expecting your matrice
           to be in form (n_features, n_samples)
         """
+
         out = self.activation(X @ self.params["weights"]
                               + self.params["bias"])
         return out
 
+    @Layer.ExceptionLogger.exception_log
     def backward(self, layer_input, error):
         delta = error * self.activation.derivative(self.params["outputs"])
         self.params["grads"]["weights"] = layer_input.T @ delta

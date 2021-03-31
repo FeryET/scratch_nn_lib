@@ -71,31 +71,30 @@ class DatasetLoader(ABC):
 class UTKDatasetLoader(DatasetLoader):
     class Decorators:
         @classmethod
-        def target_column(cls, ufunc):
-            def wrapper(self, *args, **kwargs):
-                X, y = ufunc(self, *args, **kwargs)
-                if self.target_column is None:
-                    return X, y
-                else:
-                    if self.target_column == 0:
-                        return X, y[:, self.target_column]
+        def target_column(cls, gen_func):
+            def wrapper(self, *args, **kwargs):    
+                for X, y in gen_func(self, *args, **kwargs):
+                    if self.target_column is None:
+                        pass  # Do Nothing
                     else:
-                        return X, self.encoders[self.target_column].transform(
-                            y[:, self.target_column])
+                        if self.target_column == 0:
+                            y = y[:, self.target_column][..., np.newaxis]      
+                        else:
+                            y = self.encoders[self.target_column].transform(y[:, self.target_column])
+                    yield X, y
             return wrapper
 
         @classmethod
-        def floater(cls, ufunc):
-            def wrapper(self, *args, **kwargs):
-                X, y = ufunc(self, *args, **kwargs)
-                return X.astype(np.float64), y
+        def floater(cls, gen_func):
+            def wrapper(self, *args, **kwargs): 
+                for X, y in gen_func(self, *args, **kwargs):
+                    yield X.astype(np.float64), y
             return wrapper
 
     def __init__(
         self,
         path,
         batch_size=128,
-        shuffle=True,
         validation_split=0.1,
         dim_reducer_size=128,
         target_column=None,
@@ -123,8 +122,11 @@ class UTKDatasetLoader(DatasetLoader):
         self._initalize_label_encoders()
 
     def _initalize_label_encoders(self):
-        ages, genders, races = list(zip(*[map(int, Path(f).stem.split("_")[:-1]) for f in self.files]))
-        ages, genders, races = map(lambda x: np.array(x)[...,np.newaxis], (ages, genders, races))
+        ages, genders, races = list(
+            zip(*[map(int, Path(f).stem.split("_")[:-1]) for f in self.files]))
+        ages, genders, races = map(
+            lambda x: np.array(x)[..., np.newaxis],
+            (ages, genders, races))
         self.encoders = [None, OneHotEncoder(), OneHotEncoder()]
         self.encoders[1].fit_transform(genders)
         self.encoders[2].fit_transform(races)
@@ -188,12 +190,12 @@ class UTKDatasetLoader(DatasetLoader):
         )
 
         for start_idx in self.prange:
-            batch_indices = train_indices[
+            batch_indices = list(train_indices[
                 start_idx: start_idx + self.batch_size
-            ]
+            ])
             X_batch, y_batch = [], []
             for index in batch_indices:
-                img, age, gender, race = self[index]
+                img, age, gender, race = self[int(index)]
                 X_batch.append(img)
                 y_batch.append((age, gender, race))
             X_batch = np.array(X_batch)
@@ -201,8 +203,6 @@ class UTKDatasetLoader(DatasetLoader):
             y_batch = np.array(y_batch)
             yield X_batch, y_batch
 
-    @Decorators.floater
-    @Decorators.target_column
     def validation_set(self, batch_size=30):
         X_val = np.zeros((len(self)-self.split_index, self.dim_reducer_size))
         y_val = np.zeros((len(self)-self.split_index, 3))
@@ -223,4 +223,13 @@ class UTKDatasetLoader(DatasetLoader):
                 "validation set loading: "
                 f"step #{1 + curr_idx//batch_size} "
                 f"out of total {1 + total//batch_size} steps.")
-        return X_val, y_val
+        return X_val.astype(np.float64), y_val[..., self.target_column][...,np.newaxis]
+
+    @property
+    def dimensions(self):
+        dim = [self.dim_reducer_size]
+        if self.target_column == 0:
+            dim.append(1)
+        else:
+            dim.np.append(len(self.encoders[self.target_column].get_feature_names()))
+        return dim
