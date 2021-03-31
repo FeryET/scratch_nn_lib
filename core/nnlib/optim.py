@@ -28,8 +28,6 @@ class SGDOptimizer():
     def update_lr(self, *args, **kwargs):
         if self.decay_strategy is not None:
             self.lr = self.decay_strategy(lr=self.lr, *args, **kwargs)
-        else:
-            raise RuntimeWarning("No decay strategy was found, applying no decay.")
 
     def parameters(self, params):
         self.params = params
