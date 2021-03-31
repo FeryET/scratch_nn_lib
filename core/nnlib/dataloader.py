@@ -248,7 +248,9 @@ class UTKDatasetLoader(DatasetLoader):
                 "validation set loading: "
                 f"step #{1 + curr_idx//batch_size} "
                 f"out of total {1 + val_size//batch_size} steps.")
-        return X_val.astype(np.float64), y_val[..., self.target_column][..., np.newaxis]
+        y_val = y_val[..., self.target_column][..., np.newaxis]
+        y_val = self.encoders[self.target_column].transform(y_val)
+        return X_val.astype(np.float64), y_val
 
     def test_set(self, batch_size=30):
         test_size = len(self) - self.test_split_index
@@ -270,7 +272,9 @@ class UTKDatasetLoader(DatasetLoader):
                 "test set loading: "
                 f"step #{1 + curr_idx//batch_size} "
                 f"out of total {1 + test_size//batch_size} steps.")
-        return X_test.astype(np.float64), y_test[..., self.target_column][..., np.newaxis]
+        y_test = y_test[..., self.target_column][..., np.newaxis]
+        y_test = self.encoders[self.target_column].transform(y_test)
+        return X_test.astype(np.float64), y_test
 
     @property
     def dimensions(self):
