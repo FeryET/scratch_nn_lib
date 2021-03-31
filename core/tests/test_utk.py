@@ -31,10 +31,10 @@ opt = SGDOptimizer(loss=loss, lr=10e-3, decay_strategy=ConstantDecay(
     0.98), lambda_reg=10e-5, regularizaton_loss=reg_loss)
 opt.parameters(model.params)
 
-trainer = Trainer(opt)
+trainer = Trainer(opt, epochs=1)
 
-# trainer.train(model, dataset)
+train_info, test_info = trainer.train(model, dataset)
 
-X_test, y_test = dataset.test_set()
-print(X_test.shape, y_test.shape)
+# X_test, y_test = dataset.test_set()
+# print(X_test.shape, y_test.shape)
     # pass

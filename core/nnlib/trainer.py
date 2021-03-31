@@ -39,7 +39,7 @@ class Trainer():
             y_pred = model.forward(X_val, train=False)
             val_loss = self.opt.compute_loss(pred=y_pred, target=y_val, weights=model.weights)
             info["validation_loss"] = float(val_loss)
-            dataloader.update_progress(training_loss=info["training_loss"],validation_loss=info["validation_loss"])
+            dataloader.update_progress(end=True, epoch=epoch, training_loss=info["training_loss"],validation_loss=info["validation_loss"])
             training_info.append(info)
         X_test, y_test = dataloader.test_set()
         y_pred = model.forward(X_test, train=False)

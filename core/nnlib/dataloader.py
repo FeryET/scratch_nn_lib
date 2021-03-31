@@ -8,7 +8,7 @@ from sklearn.pipeline import Pipeline
 from tqdm.auto import trange
 from sklearn.base import TransformerMixin
 import logging
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 import time
 
 
@@ -67,13 +67,23 @@ class DatasetLoader(ABC):
     def test_set(self, batch_size):
         pass
 
-    def update_progress(self, **kwargs):
+    def update_progress(self, end=False, **kwargs):
         try:
-            self.prange.set_postfix(kwargs)
-            # self.prange.update(postfix=string)
-            self.prange.refresh()
-            time.sleep(0.01)
-        except:
+            if end:
+                self.prange.close()
+                epoch = kwargs.pop("epoch")
+                print(f"Epoch #{epoch+1} ended with " + "\t".join([f"{k}: {float(v):.3f}" for k, v in kwargs.items()]))
+            else:
+                if "epoch" in kwargs.keys():
+                    self.prange.set_description(f"Epoch #{kwargs['epoch'] + 1}")
+                    kwargs.pop("epoch")
+                self.prange.set_postfix(kwargs)
+                self.prange.refresh()
+                time.sleep(0.01)    
+            
+        except Exception as e:
+            # logging.debug(e)
+            print(e)
             pass
 
 
@@ -200,7 +210,7 @@ class UTKDatasetLoader(DatasetLoader):
         if self.shuffle:
             np.random.shuffle(train_indices)
         self.prange = (
-            trange(0, len(train_indices), self.batch_size)
+            trange(0, len(train_indices), self.batch_size, leave=False)
             if progress
             else range(0, len(train_indices), self.batch_size)
         )
