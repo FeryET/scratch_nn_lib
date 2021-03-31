@@ -36,10 +36,12 @@ class Trainer():
 
             # Validation Set
             logging.info(f"validation set computations in epoch #{epoch + 1}.")
-            y_pred = model.forward(X_val, train=True)
+            y_pred = model.forward(X_val, train=False)
             val_loss = self.opt.compute_loss(pred=y_pred, target=y_val, weights=model.weights)
             info["validation_loss"] = float(val_loss)
             dataloader.update_progress(training_loss=info["training_loss"],validation_loss=info["validation_loss"])
             training_info.append(info)
-
-        return training_info
+        X_test, y_test = dataloader.test_set()
+        y_pred = model.forward(X_test, train=False)
+        test_loss = self.opt.compute_loss(pred=y_pred, target=y_test, weights=model.weights)
+        return training_info, {"test_loss": test_loss}

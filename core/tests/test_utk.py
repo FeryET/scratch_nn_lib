@@ -33,7 +33,8 @@ opt.parameters(model.params)
 
 trainer = Trainer(opt)
 
-trainer.train(model, dataset)
+# trainer.train(model, dataset)
 
-# for x,y in dataset.batches():
+X_test, y_test = dataset.test_set()
+print(X_test.shape, y_test.shape)
     # pass

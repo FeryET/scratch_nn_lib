@@ -55,7 +55,16 @@ class DatasetLoader(ABC):
 
     @property
     @abstractmethod
-    def split_index(self):
+    def test_split_index(self):
+        pass
+
+    @property
+    @abstractmethod
+    def val_split_index(self):
+        pass
+
+    @abstractmethod
+    def test_set(self, batch_size):
         pass
 
     def update_progress(self, **kwargs):
@@ -72,21 +81,22 @@ class UTKDatasetLoader(DatasetLoader):
     class Decorators:
         @classmethod
         def target_column(cls, gen_func):
-            def wrapper(self, *args, **kwargs):    
+            def wrapper(self, *args, **kwargs):
                 for X, y in gen_func(self, *args, **kwargs):
                     if self.target_column is None:
                         pass  # Do Nothing
                     else:
                         if self.target_column == 0:
-                            y = y[:, self.target_column][..., np.newaxis]      
+                            y = y[:, self.target_column][..., np.newaxis]
                         else:
-                            y = self.encoders[self.target_column].transform(y[:, self.target_column])
+                            y = self.encoders[self.target_column].transform(
+                                y[:, self.target_column])
                     yield X, y
             return wrapper
 
         @classmethod
         def floater(cls, gen_func):
-            def wrapper(self, *args, **kwargs): 
+            def wrapper(self, *args, **kwargs):
                 for X, y in gen_func(self, *args, **kwargs):
                     yield X.astype(np.float64), y
             return wrapper
@@ -96,6 +106,7 @@ class UTKDatasetLoader(DatasetLoader):
         path,
         batch_size=128,
         validation_split=0.1,
+        test_split=0.1,
         dim_reducer_size=128,
         target_column=None,
     ):
@@ -109,6 +120,7 @@ class UTKDatasetLoader(DatasetLoader):
             np.random.shuffle(self.files)
 
         self.validation_split = validation_split
+        self.test_split = test_split
         self.batch_size = batch_size
         self._target_column = target_column
         self.dim_reducer_size = dim_reducer_size
@@ -173,20 +185,24 @@ class UTKDatasetLoader(DatasetLoader):
         return img, int(age), int(gender), int(race)
 
     @property
-    def split_index(self):
-        return int(len(self) * (1 - self.validation_split))
+    def val_split_index(self):
+        return int(self.test_split_index * (1 - self.validation_split))
+
+    @property
+    def test_split_index(self):
+        return int(len(self) * (1 - self.test_split))
 
     @Decorators.floater
     @Decorators.target_column
     def batches(self, progress=True):
         logging.info("loading training batches.")
-        train_indices = np.arange(self.split_index)
+        train_indices = np.arange(self.val_split_index)
         if self.shuffle:
             np.random.shuffle(train_indices)
         self.prange = (
-            trange(0, self.split_index, self.batch_size)
+            trange(0, len(train_indices), self.batch_size)
             if progress
-            else range(0, self.split_index, self.batch_size)
+            else range(0, len(train_indices), self.batch_size)
         )
 
         for start_idx in self.prange:
@@ -204,16 +220,17 @@ class UTKDatasetLoader(DatasetLoader):
             yield X_batch, y_batch
 
     def validation_set(self, batch_size=30):
-        X_val = np.zeros((len(self)-self.split_index, self.dim_reducer_size))
-        y_val = np.zeros((len(self)-self.split_index, 3))
+        val_size = self.test_split_index - self.val_split_index
+        X_val = np.zeros((val_size, self.dim_reducer_size))
+        y_val = np.zeros((val_size, 3))
         logging.info(
-            f"validation set loading started.(batch_size={batch_size})")
+            f"validation set loading started.(batch_size={batch_size}"
+            f", validation size={val_size})")
         # lazily reducing dimensions of validation set
-        for start_idx in range(self.split_index, len(self), batch_size):
-            curr_idx = start_idx - self.split_index
-            total = len(self) - self.split_index
+        for start_idx in range(self.val_split_index, self.test_split_index, batch_size):
+            curr_idx = start_idx - self.val_split_index
             X_cache, ages, genders, races = list(
-                zip(*self[start_idx:start_idx+batch_size]))
+                zip(*self[start_idx:min(start_idx+batch_size, self.test_split_index)]))
             X_cache = np.array(X_cache)
             X_cache = self.dim_reducer.transform(X_cache)
             y_cache = np.array((ages, genders, races)).T
@@ -222,8 +239,30 @@ class UTKDatasetLoader(DatasetLoader):
             logging.info(
                 "validation set loading: "
                 f"step #{1 + curr_idx//batch_size} "
-                f"out of total {1 + total//batch_size} steps.")
-        return X_val.astype(np.float64), y_val[..., self.target_column][...,np.newaxis]
+                f"out of total {1 + val_size//batch_size} steps.")
+        return X_val.astype(np.float64), y_val[..., self.target_column][..., np.newaxis]
+
+    def test_set(self, batch_size=30):
+        test_size = len(self) - self.test_split_index
+        X_test = np.zeros((test_size, self.dim_reducer_size))
+        y_test = np.zeros((test_size, 3))
+        logging.info(
+            f"test set loading started.(batch_size={batch_size})")
+        # lazily reducing dimensions of validation set
+        for start_idx in range(self.test_split_index, len(self), batch_size):
+            curr_idx = start_idx - self.test_split_index
+            X_cache, ages, genders, races = list(
+                zip(*self[start_idx:start_idx+batch_size]))
+            X_cache = np.array(X_cache)
+            X_cache = self.dim_reducer.transform(X_cache)
+            y_cache = np.array((ages, genders, races)).T
+            y_test[curr_idx:curr_idx+batch_size, :] = y_cache
+            X_test[curr_idx:curr_idx+batch_size, :] = X_cache
+            logging.info(
+                "test set loading: "
+                f"step #{1 + curr_idx//batch_size} "
+                f"out of total {1 + test_size//batch_size} steps.")
+        return X_test.astype(np.float64), y_test[..., self.target_column][..., np.newaxis]
 
     @property
     def dimensions(self):
