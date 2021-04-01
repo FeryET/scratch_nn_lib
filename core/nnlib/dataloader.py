@@ -282,5 +282,5 @@ class UTKDatasetLoader(DatasetLoader):
         if self.target_column == 0:
             dim.append(1)
         else:
-            dim.np.append(len(self.encoders[self.target_column].get_feature_names()))
+            dim.append(len(self.encoders[self.target_column].get_feature_names()))
         return dim
