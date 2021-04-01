@@ -41,4 +41,4 @@ class CrossEntropyLoss(Loss):
 
 class CrossEntropyLossWithSoftmax(CrossEntropyLoss):
     def gradient(self, pred, target):
-        return target - pred
+        return pred - target
