@@ -3,6 +3,6 @@ import numpy as np
 
 class SoftmaxAccuracy:
     def __call__(self, y_true, y_pred, *args, **kwds):
-        y_pred_maxed = np.zeros_like(y_true)
-        y_pred_maxed[:, np.argmax(y_pred, axis=1)] = 1
-        return accuracy_score(y_true=y_true, y_pred=y_pred_maxed)
+        y_maxed = np.argmax(y_true, axis=1)
+        y_pred_maxed = np.argmax(y_pred, axis=1)
+        return (y_maxed == y_pred_maxed).astype(np.int32).mean()
