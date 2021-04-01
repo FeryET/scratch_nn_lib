@@ -33,7 +33,7 @@ class L2RegularizationLoss(Loss):
 
 class CrossEntropyLoss(Loss):
     def __call__(self, pred, target):
-        return -np.sum(target * np.log(pred)).mean()
+        return -np.sum(target * np.log(np.maximum(pred, 1e-9)), axis=1).mean()
 
     def gradient(self, pred, target):
         return target/pred + (1-target)/(1-pred)

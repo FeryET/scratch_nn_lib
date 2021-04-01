@@ -146,7 +146,7 @@ class UTKDatasetLoader(DatasetLoader):
         ages, genders, races = map(
             lambda x: np.array(x)[..., np.newaxis],
             (ages, genders, races))
-        self.encoders = [MinMaxScaler(), OneHotEncoder(), OneHotEncoder()]
+        self.encoders = [MinMaxScaler(), OneHotEncoder(sparse=False), OneHotEncoder(sparse=False)]
         self.encoders[0].fit_transform(ages)
         self.encoders[1].fit_transform(genders)
         self.encoders[2].fit_transform(races)

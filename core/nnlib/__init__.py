@@ -8,3 +8,4 @@ from .loss import *
 from .optim import *
 from .trainer import *
 from .dataloader import *
+from .metrics import *
