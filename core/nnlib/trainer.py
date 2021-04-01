@@ -32,7 +32,7 @@ class Trainer():
                 self.opt.step(batch_size=len(X_batch))
                 info["train_loss"].append(loss)
                 for k, metr in metrics.items():
-                    value = metr(y_pred=y_pred, y_true=y_batch)
+                    value = float(np.mean(metr(y_pred=y_pred, y_true=y_batch)))
                     info[f"train_{k}"].append(value)
                 dataloader.update_progress(loss=loss)
 
