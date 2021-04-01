@@ -53,7 +53,7 @@ class Trainer():
         X_test, y_test = dataloader.test_set()
         y_pred = model.forward(X_test, train=False)
         test_info = {}
-        test_info["test_loss"] = self.opt.compute_loss(pred=y_pred, target=y_test, weights=model.weights)
+        test_info["test_loss"] = float(self.opt.compute_loss(pred=y_pred, target=y_test, weights=model.weights))
         for k, metr in metrics.items():
             test_info[f"test_{k}"] = float(metr(y_pred=y_pred, y_true=y_test))
         return training_info, test_info

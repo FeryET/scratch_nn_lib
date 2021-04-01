@@ -43,8 +43,8 @@ class SGDOptimizer():
         else:
             return self.loss(target=target, pred=pred)
 
-    def compute_loss_grad(self, target, pred):
-        return self.loss.gradient(target=target, pred=pred)
+    def compute_loss_grad(self, target, pred, **kwargs):
+        return self.loss.gradient(target=target, pred=pred, **kwargs)
 
     def step(self, batch_size, **kwargs):
         for name, p in list(self.params.items())[1:]:

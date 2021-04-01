@@ -30,7 +30,7 @@ class LeakyRelu(Activation):
         transformed[neg_indices] *= self.leakage_ratio
         return transformed
 
-    def derivative(self, X):
+    def derivative(self, X, **kwargs):
         neg_indices = X < 0
         der = np.ones_like(X)
         der[neg_indices] = self.leakage_ratio
@@ -38,7 +38,7 @@ class LeakyRelu(Activation):
 
 
 class Softmax(Activation):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, last_layer_with_cross_entropy=True,*args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def __call__(self, X):
@@ -53,3 +53,7 @@ class Softmax(Activation):
         delta[..., idx, rev_idx] = - X[..., idx] * X[..., rev_idx]
         delta[..., idx, idx] = X[..., idx] * (1 - X[..., idx])
         return delta
+
+class SoftmaxWithCrossEntropy(Softmax):
+    def derivative(self, X):
+        return 1
