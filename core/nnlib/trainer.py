@@ -47,7 +47,7 @@ class Trainer():
             val_loss = self.opt.compute_loss(pred=y_pred, target=y_val, weights=model.weights)
             info["val_loss"] = float(val_loss)
             for k, metr in metrics.items():
-                info[f"val_k"] = float(metr(y_pred=y_pred, y_true=y_val))
+                info[f"val_{k}"] = float(metr(y_pred=y_pred, y_true=y_val))
             dataloader.update_progress(end=True, **info)
             training_info.append(info)
         X_test, y_test = dataloader.test_set()
