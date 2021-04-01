@@ -19,8 +19,8 @@ class Trainer():
         training_info = []
         X_val, y_val = dataloader.validation_set()
         logging.info("started training")
-        for epoch in range(self.total_epochs):
-            info = {"epoch": epoch + 1, "train_loss": [], "val_loss": []}
+        for epoch in range(1, self.total_epochs+1):
+            info = {"epoch": epoch, "train_loss": [], "val_loss": []}
             for k in metrics.keys():
                 info[f"train_{k}"] = []
             # Train Set
@@ -39,7 +39,7 @@ class Trainer():
             for k in info.keys():
                 if k.startswith("train"):
                     info[k] = float(np.mean(info[k]))
-            self.opt.update_lr()
+            self.opt.update_lr(epoch=epoch)
 
             # Validation Set
             logging.info(f"validation set computations in epoch #{epoch + 1}.")

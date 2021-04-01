@@ -9,6 +9,7 @@ from pprint import pprint
 logging.basicConfig(format='%(asctime)s %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
 
+
 path = "data/UTKFace"
 
 
@@ -85,3 +86,6 @@ print(dataset.y.shape)
 trainer.train(model, dataset)
 # X, y = dataset.validation_set(batch_size=100)
 # print(X.shape, y.shape)
+
+opt = SGDOptimizer()
+

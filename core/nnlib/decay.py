@@ -21,7 +21,7 @@ class ConstantDecay(LearningRateDecay):
 
 
 class TimeStepDecay(LearningRateDecay):
-    def __init__(self, decay=0.9, *args, **kwargs):
+    def __init__(self, decay=0.5, *args, **kwargs):
         self.decay = decay
         super().__init__(*args, **kwargs)
 
